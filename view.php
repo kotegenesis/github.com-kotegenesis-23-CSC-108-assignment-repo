@@ -7,43 +7,31 @@ $dbname = "student_db";
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 
-// Fetch data
-$sql = "SELECT * FROM student_records";
-$result = $conn->query($sql);
-?>
+// Check connection
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Registered Students</title>
-</head>
-<body>
-    <h2>Registered Students</h2>
-    <table border="1" cellpadding="10">
-        <tr>
-            <th>ID</th>
-            <th>Full Name</th>
-            <th>Email</th>
-            <th>Department</th>
-            <th>Matric Number</th>
-            <th>Action</th>
-        </tr>
-        <?php
-        if ($result->num_rows > 0) {
-            while($row = $result->fetch_assoc()) {
-                echo "<tr>
-                        <td>".$row['id']."</td>
-                        <td>".$row['fullname']."</td>
-                        <td>".$row['email']."</td>
-                        <td>".$row['department']."</td>
-                        <td>".$row['matric']."</td>
-                        <td><a href='delete.php?id=".$row['id']."'>Delete</a></td>
-                    </tr>";
-            }
-        } else {
-            echo "<tr><td colspan='6'>No students registered</td></tr>";
-        }
-        ?>
-    </table>
-</body>
-</html>
+// Check if ID is passed in URL
+if (isset($_GET['id'])) {
+    $id = $_GET['id'];
+
+    // Prepare SQL statement to prevent SQL injection
+    $stmt = $conn->prepare("DELETE FROM student_records WHERE id = ?");
+    $stmt->bind_param("i", $id);
+
+    if ($stmt->execute()) {
+        // Redirect back to the student list page
+        header("Location: index.php");
+        exit();
+    } else {
+        echo "Error deleting record: " . $conn->error;
+    }
+
+    $stmt->close();
+} else {
+    echo "No ID specified.";
+}
+
+$conn->close();
+?>
